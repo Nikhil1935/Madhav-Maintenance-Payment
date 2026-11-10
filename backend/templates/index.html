@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Madhav Maintenance Payment — UPI Payment Proof &amp; Admin Vault</title>
+  <link rel="icon" type="image/jpeg" href="/static/img/app_logo.jpg" />
+  <link rel="stylesheet" href="/static/css/cupertino.css" />
+</head>
+<body>
+
+  <!-- Food-Delivery-Style Compact Header with Top-Left Three-Dot Menu -->
+  <header class="top-nav">
+    <div class="nav-inner">
+      <div class="brand">
+        <!-- 2(a) Top-Left Three-Dot Menu Bar -->
+        <div class="menu-wrapper">
+          <button
+            id="topLeftMenuBtn"
+            type="button"
+            class="three-dot-btn"
+            aria-label="Open Menu"
+            onclick="toggleTopLeftMenu(event)"
+          >
+            ⋮
+          </button>
+          <div id="topLeftDropdown" class="top-left-dropdown">
+            <button type="button" class="menu-item-btn" onclick="selectMenuDestination('resident')">
+              <span>🏠 Resident Home</span>
+              <span style="font-size: 11px; color: var(--text-tertiary);">Upload</span>
+            </button>
+            <button type="button" class="menu-item-btn" onclick="selectMenuDestination('meetings')">
+              <span>💬 Society Meetings</span>
+              <span id="menuMeetingsCount" class="badge badge-pending" style="padding: 2px 7px;">New</span>
+            </button>
+            <button type="button" class="menu-item-btn" onclick="selectMenuDestination('admin')">
+              <span>🔒 Admin Vault</span>
+              <span style="font-size: 11px; color: var(--text-tertiary);">Protected</span>
+            </button>
+            <div style="height: 1px; background: var(--hairline); margin: 6px 0;"></div>
+            <button type="button" id="darkModeToggleBtn" class="menu-item-btn" onclick="toggleDarkMode()">
+              <span id="darkModeLabel">🌙 Dark Mode</span>
+              <span id="darkModeStatus" style="font-size: 11px; color: var(--text-tertiary);">Off</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6. Updated Madhav Apartment Logo -->
+        <img src="/static/img/app_logo.jpg" alt="Madhav Apartment Logo" class="brand-logo-img" />
+
+        <!-- 1(b) Clean Food-Delivery-Style Header Scaling -->
+        <div>
+          <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--apple-blue); display: block;">
+            MADHAV APARTMENT • माधव अपार्टमेंट
+          </span>
+          <span class="brand-title" style="font-size: 16px;">Madhav Maintenance Payment</span>
+        </div>
+      </div>
+
+      <!-- Home Section Tabs: UPI Screenshot Tab vs. Society Meetings Tab -->
+      <div id="homeTabControl" class="segmented-control" role="tablist" aria-label="Home Section Tabs">
+        <button id="tabPaymentBtn" class="seg-btn active" type="button" onclick="switchView('resident')">
+          <span>💳</span> Payment Screenshot
+        </button>
+        <button id="tabMeetingsBtn" class="seg-btn" type="button" onclick="switchView('meetings')">
+          <span>💬</span> Society Meetings
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- ================================================================
+         VIEW 1: RESIDENT HOME (Resident Details + Screenshot + Verified Receipt)
+         ================================================================ -->
+    <section id="residentView" class="view-section active">
+      <div class="resident-grid">
+
+        <!-- Left Card: (b) Resident Details + (c) UPI/Bank Payment Screenshot + (d) Verified Receipt Details -->
+        <div class="cupertino-card">
+          <div class="section-eyebrow">Resident Payment Portal</div>
+          <h1 class="card-title" style="font-size: 21px;">Submit UPI Payment Proof</h1>
+          <p class="card-desc">
+            Enter your flat details and upload your UPI or bank transfer screenshot.
+          </p>
+
+          <form id="residentPaymentForm" onsubmit="handleResidentSubmit(event)" novalidate>
+            <!-- 3(b) & 7: Resident Details (Payment Amount auto-filled AND editable) -->
+            <div style="margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">
+              Resident Details
+            </div>
+            <div class="grouped-form">
+              <div class="form-row">
+                <label for="residentName">Full Name *</label>
+                <input
+                  id="residentName"
+                  name="resident_name"
+                  type="text"
+                  placeholder="e.g., Aarav Mehta"
+                  required
+                  autocomplete="name"
+                />
+              </div>
+              <div class="form-row">
+                <label for="flatNumber">Flat Number *</label>
+                <input
+                  id="flatNumber"
+                  name="flat_number"
+                  type="text"
+                  placeholder="e.g., A-402"
+                  required
+                />
+              </div>
+              <div class="form-row">
+                <label for="paymentAmount">Payment Amt (₹) ✎</label>
+                <input
+                  id="paymentAmount"
+                  name="payment_amount"
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  placeholder="Auto-filled from screenshot (tap to edit)"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- 3(c): UPI / Bank Payment Screenshot Tab -->
+            <div style="margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">
+              UPI / Bank Payment Screenshot
+            </div>
+            <input
+              id="screenshotInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              style="display: none;"
+              onchange="handleFileSelected(event)"
+            />
+            <div
+              id="dropzone"
+              class="dropzone"
+              onclick="document.getElementById('screenshotInput').click()"
+            >
+              <div class="dropzone-icon">📸</div>
+              <div id="dropzoneTitle" class="dropzone-title">
+                Tap to Select Payment Screenshot
+              </div>
+              <div class="dropzone-hint">
+                All UPI Apps (GPay, PhonePe, Paytm, BHIM, Navi, CRED, etc.) &amp; Bank Transfers
+              </div>
+            </div>
+
+            <!-- Invalid Screenshot Alert Banner -->
+            <div
+              id="invalidScreenshotBanner"
+              style="display: none; margin-bottom: 16px; padding: 14px 16px; border-radius: var(--radius-md); background: rgba(255, 59, 48, 0.10); border: 1px solid rgba(255, 59, 48, 0.35); color: #B91C1C; font-size: 13px;"
+            >
+              <div style="font-weight: 700; margin-bottom: 4px;">⚠️ Invalid Payment Screenshot</div>
+              <div id="invalidScreenshotText">
+                Please upload a valid payment receipt screenshot from Google Pay, PhonePe, Paytm, BHIM UPI, or your banking app.
+              </div>
+            </div>
+
+            <!-- Quick Sample Receipt Generator -->
+            <div class="simulator-bar">
+              <span class="simulator-label">⚡ Quick Test Receipt:</span>
+              <button type="button" class="chip-btn" onclick="generateSampleReceipt('Google Pay')">
+                GPay Receipt
+              </button>
+              <button type="button" class="chip-btn" onclick="generateSampleReceipt('PhonePe')">
+                PhonePe Receipt
+              </button>
+              <button type="button" class="chip-btn" onclick="generateSampleReceipt('BHIM UPI')">
+                BHIM UPI
+              </button>
+              <button type="button" class="chip-btn" onclick="generateSampleReceipt('Bank Transfer')">
+                Bank IMPS
+              </button>
+            </div>
+
+            <!-- 3(d) & 7: Verified Receipt Details Block (Sender Name Editable, Receiver & Other Fields Locked) -->
+            <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">
+                Verified Receipt Details
+              </span>
+              <span id="ocrStatusBadge" class="badge badge-pending">Awaiting Screenshot</span>
+            </div>
+
+            <div class="grouped-form">
+              <div class="form-row">
+                <label for="ocrSenderName">Sender Name ✎</label>
+                <input
+                  id="ocrSenderName"
+                  name="sender_name"
+                  type="text"
+                  placeholder="Sender name (editable)"
+                  required
+                />
+              </div>
+              <div class="form-row">
+                <label for="ocrReceiverName">Receiver Name 🔒</label>
+                <input
+                  id="ocrReceiverName"
+                  name="receiver_name"
+                  type="text"
+                  placeholder="Auto-extracted receiver name"
+                  readonly
+                  tabindex="-1"
+                  style="cursor: not-allowed;"
+                  required
+                />
+              </div>
+              <div class="form-row">
+                <label for="ocrPaymentApp">Payment App ✎</label>
+                <input
+                  id="ocrPaymentApp"
+                  name="payment_app"
+                  type="text"
+                  placeholder="Auto-detected or type app name (editable)"
+                />
+              </div>
+              <div class="form-row">
+                <label for="ocrTransactionAmount">Tx Amount (₹) 🔒</label>
+                <input
+                  id="ocrTransactionAmount"
+                  name="transaction_amount"
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  placeholder="Auto-extracted amount"
+                  readonly
+                  tabindex="-1"
+                  style="cursor: not-allowed;"
+                  required
+                />
+              </div>
+              <div class="form-row">
+                <label for="ocrTransactionId">Transaction ID 🔒</label>
+                <input
+                  id="ocrTransactionId"
+                  name="transaction_id"
+                  type="text"
+                  placeholder="12-digit UTR / Ref ID"
+                  readonly
+                  tabindex="-1"
+                  style="cursor: not-allowed;"
+                  required
+                />
+              </div>
+              <div class="form-row">
+                <label for="ocrUpiId">UPI ID 🔒</label>
+                <input
+                  id="ocrUpiId"
+                  name="upi_id"
+                  type="text"
+                  placeholder="Auto-extracted UPI ID"
+                  readonly
+                  tabindex="-1"
+                  style="cursor: not-allowed;"
+                  required
+                />
+              </div>
+              <div class="form-row">
+                <label for="ocrTransactionDate">Date 🔒</label>
+                <input
+                  id="ocrTransactionDate"
+                  name="transaction_date"
+                  type="text"
+                  placeholder="Auto-extracted date"
+                  readonly
+                  tabindex="-1"
+                  style="cursor: not-allowed;"
+                  required
+                />
+              </div>
+            </div>
+
+            <button id="submitPaymentBtn" type="submit" class="btn-primary">
+              <span>🔐</span> Submit Proof to Admin Vault
+            </button>
+          </form>
+        </div>
+
+        <!-- Right Card: Live Screenshot Preview & Mapped Columns -->
+        <div class="cupertino-card">
+          <div class="section-eyebrow">Live Receipt Scanner</div>
+          <h2 class="card-title" style="font-size: 20px;">Screenshot Preview</h2>
+          <p class="card-desc">
+            Verify your uploaded payment screenshot below before submitting.
+          </p>
+
+          <div id="screenshotPreviewBox" class="screenshot-preview-box">
+            <div id="emptyPreviewState">
+              <div style="font-size: 34px; margin-bottom: 8px;">🧾</div>
+              <div style="font-weight: 600; font-size: 14px; color: var(--text-secondary);">
+                No screenshot selected yet
+              </div>
+              <div style="font-size: 12.5px; color: var(--text-tertiary); margin-top: 4px;">
+                Upload a screenshot or click "Quick Test Receipt"
+              </div>
+            </div>
+            <img id="previewImage" src="" alt="UPI Screenshot Preview" style="display: none;" />
+          </div>
+
+          <div style="background: var(--bg-input); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--hairline);">
+            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px;">
+              Verified Receipt Summary
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+              <div><span style="color: var(--text-secondary);">1. Name:</span> <strong id="mapName">—</strong></div>
+              <div><span style="color: var(--text-secondary);">2. Flat number:</span> <strong id="mapFlat">—</strong></div>
+              <div><span style="color: var(--text-secondary);">3. Payment amount:</span> <strong id="mapPayAmt">—</strong></div>
+              <div><span style="color: var(--text-secondary);">4. UPI ID:</span> <strong id="mapUpi" class="mono-text">—</strong></div>
+              <div><span style="color: var(--text-secondary);">5. Transaction amount:</span> <strong id="mapTxAmt">—</strong></div>
+              <div><span style="color: var(--text-secondary);">6. Transaction ID:</span> <strong id="mapTxId" class="mono-text">—</strong></div>
+              <div><span style="color: var(--text-secondary);">Sender Name:</span> <strong id="mapHolder">—</strong></div>
+              <div><span style="color: var(--text-secondary);">Receiver Name:</span> <strong id="mapReceiver">—</strong></div>
+              <div><span style="color: var(--text-secondary);">Date:</span> <strong id="mapDate">—</strong></div>
+            </div>
+          </div>
+
+          <!-- Green Pop-Up Confirmation Modal Dialog -->
+          <div
+            id="submissionReceiptBox"
+            class="modal-backdrop"
+            style="display: none; align-items: center; justify-content: center; z-index: 1000;"
+            onclick="if (event.target === this) this.style.display='none';"
+          >
+            <div
+              style="background: #ECFDF5; border: 2px solid #16A34A; border-radius: 22px; padding: 28px 24px; max-width: 420px; width: 92%; text-align: center; box-shadow: 0 20px 50px rgba(22, 163, 74, 0.25);"
+            >
+              <div
+                style="width: 64px; height: 64px; border-radius: 50%; background: #16A34A; color: #FFFFFF; font-size: 34px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;"
+              >
+                ✓
+              </div>
+              <div style="font-weight: 800; color: #14532D; font-size: 20px; margin-bottom: 8px;">
+                Maintenance Receipt Sent!
+              </div>
+              <div style="font-weight: 600; color: #166534; font-size: 14.5px; line-height: 1.45; margin-bottom: 14px;">
+                Your maintenance receipt is sent to the Madhav admin account.
+              </div>
+              <div
+                id="submissionReceiptText"
+                style="font-size: 13px; font-weight: 700; color: #065F46; background: #D1FAE5; padding: 12px; border-radius: 12px; margin-bottom: 18px;"
+              ></div>
+              <button
+                type="button"
+                onclick="document.getElementById('submissionReceiptBox').style.display='none';"
+                style="width: 100%; height: 46px; border: none; border-radius: 12px; background: #16A34A; color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer;"
+              >
+                OK, Done
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW 2: SOCIETY MEETINGS (Google Messages Style, Strictly Read-Only)
+         ================================================================ -->
+    <section id="meetingsView" class="view-section">
+      <div class="gmessages-container">
+        <div class="gmessages-header">
+          <img src="/static/img/app_logo.jpg" alt="Madhav Admin" class="gmessages-avatar" />
+          <div style="flex: 1;">
+            <div style="font-weight: 700; font-size: 15.5px;">Madhav Apartment Society Broadcasts</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">
+              Official Meeting Notices from Admin • Read-Only Channel
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="loadSocietyMeetings()">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div id="meetingsFeed" class="gmessages-feed">
+          <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            Loading society meeting messages...
+          </div>
+        </div>
+
+        <div class="gmessages-readonly-footer">
+          🔒 Read-only broadcast channel • Only Society Admin can post meeting notifications from the Admin Vault
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW 3: ADMIN VAULT (Protected — View, Verify, Export & Send Meetings)
+         ================================================================ -->
+    <section id="adminView" class="view-section">
+
+      <!-- Admin Login Gate -->
+      <div id="adminLoginGate" class="cupertino-card" style="max-width: 440px; margin: 40px auto;">
+        <div class="section-eyebrow">Restricted Access</div>
+        <h2 class="card-title">Admin Vault Sign In</h2>
+        <p class="card-desc">
+          All resident UPI screenshots, payment records, meeting broadcasts, and Excel/CSV exports are restricted to the Administrator.
+        </p>
+
+        <form onsubmit="handleAdminLogin(event)">
+          <div class="grouped-form">
+            <div class="form-row">
+              <label for="adminUsername">Username</label>
+              <input id="adminUsername" type="text" value="admin" required />
+            </div>
+            <div class="form-row">
+              <label for="adminPassword">Password</label>
+              <input id="adminPassword" type="password" value="Admin@123" placeholder="Enter Admin Password" required />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">
+            <span>🔓</span> Unlock Admin Vault
+          </button>
+          <div style="margin-top: 10px; font-size: 12px; color: var(--text-tertiary); text-align: center;">
+            Default Admin credentials: <code>admin</code> / <code>Admin@123</code>
+          </div>
+        </form>
+      </div>
+
+      <!-- Unlocked Admin Dashboard -->
+      <div id="adminDashboardContent" style="display: none;">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+          <div>
+            <div class="section-eyebrow">Administrator Console</div>
+            <h2 class="card-title" style="margin-bottom: 2px;">UPI Payment Records, Meeting Broadcasts &amp; Exporter</h2>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-secondary" onclick="loadAdminPayments(); loadSocietyMeetings();">
+              🔄 Refresh Data
+            </button>
+            <button type="button" class="btn-secondary" onclick="handleAdminLogout()">
+              🚪 Lock Vault
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Submissions</div>
+            <div id="kpiTotalEntries" class="kpi-value">0</div>
+            <div class="kpi-sub">Recorded in SQLite Vault</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Declared Payment Total</div>
+            <div id="kpiPaymentTotal" class="kpi-value">₹0.00</div>
+            <div class="kpi-sub">Sum of Payment Amount column</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">OCR Transaction Total</div>
+            <div id="kpiTxTotal" class="kpi-value" style="color: var(--apple-blue);">₹0.00</div>
+            <div class="kpi-sub">Sum of Transaction Amount column</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Verification Health</div>
+            <div id="kpiVerifiedCount" class="kpi-value" style="color: var(--apple-green);">0 Verified</div>
+            <div id="kpiMismatchSub" class="kpi-sub">0 Amount Mismatches</div>
+          </div>
+        </div>
+
+        <!-- 4(d): Admin-Only Society Meeting Broadcast Composer -->
+        <div class="export-studio" style="margin-bottom: 22px;">
+          <h3 style="font-size: 16.5px; font-weight: 700; margin-bottom: 4px;">
+            📢 Broadcast Society Meeting Notification
+          </h3>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">
+            Send an official society meeting message to all residents. It will appear immediately in the Google Messages-style Society Meetings tab.
+          </p>
+          <form onsubmit="handleAdminSendMeeting(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                  Meeting Date &amp; Time *
+                </label>
+                <input
+                  id="adminMeetingDate"
+                  type="text"
+                  class="cupertino-input"
+                  style="width: 100%;"
+                  placeholder="e.g., 2026-11-05 • 07:00 PM"
+                  required
+                />
+              </div>
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                  Meeting Topic / Subject *
+                </label>
+                <input
+                  id="adminMeetingTopic"
+                  type="text"
+                  class="cupertino-input"
+                  style="width: 100%;"
+                  placeholder="e.g., Annual General Body &amp; Maintenance Review"
+                  required
+                />
+              </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                Message Body *
+              </label>
+              <textarea
+                id="adminMeetingBody"
+                rows="3"
+                class="cupertino-input"
+                style="width: 100%; font-family: inherit;"
+                placeholder="Write the society meeting agenda, venue, and details for residents..."
+                required
+              ></textarea>
+            </div>
+            <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px;">
+              📤 Send Meeting Message to Residents
+            </button>
+          </form>
+        </div>
+
+        <!-- Multi-Format CSV & Excel Export Studio -->
+        <div class="export-studio">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h3 style="font-size: 16.5px; font-weight: 700;">
+                📊 Multi-Format CSV &amp; Excel (.xlsx) Export Studio
+              </h3>
+              <p style="font-size: 13px; color: var(--text-secondary);">
+                Switch between multiple CSV presets, delimiters, date styles, or native Microsoft Excel (.xlsx) anytime.
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn-secondary" onclick="previewCsvModal()">
+                👁️ Preview CSV Output
+              </button>
+              <button type="button" class="btn-primary" style="width: auto; padding: 10px 18px;" onclick="triggerAdminExport('xlsx')">
+                📗 Download Excel (.xlsx)
+              </button>
+            </div>
+          </div>
+
+          <div class="export-controls-grid">
+            <div class="field-block">
+              <label for="exportFormatSelect">Export Format Preset</label>
+              <select id="exportFormatSelect" onchange="handleFormatPresetChange()">
+                <option value="standard_csv">Standard CSV (Comma-Separated, UTF-8)</option>
+                <option value="core_6_csv">Strict 6-Column CSV (Name, Flat, Payment, UPI, Tx Amt, Tx ID)</option>
+                <option value="excel_bom_csv">Excel-Optimized CSV (UTF-8 with BOM)</option>
+                <option value="semicolon_csv">Semicolon-Separated CSV (;)</option>
+                <option value="tsv">Tab-Separated Values (.tsv)</option>
+                <option value="pipe_csv">Pipe-Delimited CSV (|)</option>
+                <option value="accounting_csv">Accounting &amp; Variance Reconciliation CSV</option>
+                <option value="xlsx">Native Microsoft Excel Workbook (.xlsx)</option>
+              </select>
+            </div>
+
+            <div class="field-block">
+              <label for="exportDelimiterSelect">Delimiter Override</label>
+              <select id="exportDelimiterSelect">
+                <option value="">Format Default</option>
+                <option value="comma">Comma ( , )</option>
+                <option value="semicolon">Semicolon ( ; )</option>
+                <option value="tab">Tab ( \t )</option>
+                <option value="pipe">Pipe ( | )</option>
+              </select>
+            </div>
+
+            <div class="field-block">
+              <label for="exportDateStyleSelect">Date Format</label>
+              <select id="exportDateStyleSelect">
+                <option value="iso">ISO (YYYY-MM-DD)</option>
+                <option value="dmy">Indian / UK (DD/MM/YYYY)</option>
+                <option value="us">US (MM/DD/YYYY)</option>
+              </select>
+            </div>
+
+            <div>
+              <button type="button" class="btn-primary" style="padding: 9.5px 18px;" onclick="triggerAdminExport()">
+                ⬇️ Export Selected Format
+              </button>
+            </div>
+          </div>
+
+          <!-- Customizable Column Selector -->
+          <div class="columns-pill-bar" id="exportColumnsBar">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); align-self: center; margin-right: 4px;">
+              Included Columns:
+            </span>
+            <label class="col-check-pill"><input type="checkbox" value="resident_name" checked /> 1. Name</label>
+            <label class="col-check-pill"><input type="checkbox" value="flat_number" checked /> 2. Flat number</label>
+            <label class="col-check-pill"><input type="checkbox" value="payment_amount" checked /> 3. Payment amount</label>
+            <label class="col-check-pill"><input type="checkbox" value="upi_id" checked /> 4. UPI ID</label>
+            <label class="col-check-pill"><input type="checkbox" value="transaction_amount" checked /> 5. Transaction amount</label>
+            <label class="col-check-pill"><input type="checkbox" value="transaction_id" checked /> 6. Transaction ID</label>
+            <label class="col-check-pill"><input type="checkbox" value="transaction_date" checked /> Date</label>
+            <label class="col-check-pill"><input type="checkbox" value="account_holder_name" checked /> Account holder's name</label>
+            <label class="col-check-pill"><input type="checkbox" value="sender_name" /> Sender name</label>
+            <label class="col-check-pill"><input type="checkbox" value="receiver_name" /> Receiver name</label>
+            <label class="col-check-pill"><input type="checkbox" value="payment_app" /> Payment App</label>
+            <label class="col-check-pill"><input type="checkbox" value="verification_status" /> Status</label>
+          </div>
+        </div>
+
+        <!-- Search & Filter Toolbar -->
+        <div class="admin-toolbar">
+          <div class="search-group">
+            <input
+              id="adminSearchInput"
+              type="text"
+              class="cupertino-input"
+              placeholder="🔍 Search by Name, Flat, UPI ID, UTR, Sender..."
+              oninput="loadAdminPayments()"
+            />
+            <select id="adminStatusFilter" class="cupertino-input" style="min-width: 170px;" onchange="loadAdminPayments()">
+              <option value="all">All Statuses</option>
+              <option value="Verified">Verified</option>
+              <option value="Amount Mismatch">Amount Mismatch</option>
+              <option value="Pending">Pending</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Admin Records Table -->
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="cupertino-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>1. Name</th>
+                  <th>2. Flat number</th>
+                  <th>3. Payment amount</th>
+                  <th>4. UPI ID</th>
+                  <th>5. Transaction amount</th>
+                  <th>6. Transaction ID</th>
+                  <th>Date</th>
+                  <th>Sender Name</th>
+                  <th>Receiver Name</th>
+                  <th>Status</th>
+                  <th>Proof &amp; Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminTableBody">
+                <tr>
+                  <td colspan="12" style="text-align: center; padding: 32px; color: var(--text-secondary);">
+                    Loading payment records...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Screenshot & CSV Preview Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" onclick="if(event.target === this) closeModal()">
+    <div class="modal-sheet">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 id="modalTitle" style="font-size: 18px; font-weight: 700;">Preview</h3>
+        <button type="button" class="btn-secondary" style="padding: 5px 11px;" onclick="closeModal()">✕ Close</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Hidden Canvas used to generate realistic sample UPI screenshots -->
+  <canvas id="receiptCanvas" width="680" height="860" style="display: none;"></canvas>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
